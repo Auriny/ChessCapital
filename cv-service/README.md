@@ -116,6 +116,11 @@
 #
 ## Ладно, расскажу
 
+### Установи uv
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
 ### Укажи конкретную версию
 ```text
 uv python pin 3.11.14

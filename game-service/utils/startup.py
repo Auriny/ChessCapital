@@ -1,10 +1,15 @@
-from pathlib import Path
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
+from anyio import Path
+from fastapi import FastAPI
 
 from config import settings
 
 
-def check_pgn_folder() -> None:
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     folder = Path(settings.PGN_FILES_FOLDER)
-    if folder.exists():
-        return
-    folder.mkdir()
+    if not await folder.exists():
+        await folder.mkdir()
+    yield

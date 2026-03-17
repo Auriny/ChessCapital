@@ -21,7 +21,7 @@ class ChessFacade:
         for file in files:
             content = await file.read_text()
             game = await to_thread.run_sync(read_game, io.StringIO(content))
-            if not game.end().board().is_game_over():
+            if game and not game.end().board().is_game_over():
                 return file
         msg = "No active games found."
         raise GameNotFoundError(active=False, msg=msg)
@@ -36,7 +36,7 @@ class ChessFacade:
             "Date": str(data.date),
             "TimeControl": str(data.time_control),
             "Round": str(data.round),
-            "Site": data.stream_url,
+            "Site": str(data.stream_url),
         })
         file = Path(
             f"{settings.PGN_FILES_FOLDER}/{datetime.now(tz=UTC)}.pgn"
@@ -47,7 +47,11 @@ class ChessFacade:
     async def load_game() -> Game:
         pgn = await ChessFacade._get_last_pgn_path()
         content = await pgn.read_text()
-        return await to_thread.run_sync(read_game, io.StringIO(content))
+        game = await to_thread.run_sync(read_game, io.StringIO(content))
+        if game:
+            return game
+        msg = "No active games found."
+        raise GameNotFoundError(active=False, msg=msg)
 
     @staticmethod
     async def save_game(game: Game) -> None:
@@ -59,6 +63,6 @@ class ChessFacade:
     async def push(move: str) -> None:
         game = await ChessFacade.load_game()
         node = game.end()
-        move = Move.from_uci(move)
-        await to_thread.run_sync(node.add_variation, move)
+        move_instance = Move.from_uci(move)
+        await to_thread.run_sync(node.add_variation, move_instance)
         await ChessFacade.save_game(game)

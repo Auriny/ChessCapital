@@ -2,11 +2,11 @@ from fastapi import FastAPI
 
 from exceptions import GameNotFoundError, exc_handler
 from routers import api_router
-from utils.startup import check_pgn_folder
+from utils.startup import lifespan
 
 app = FastAPI(
     title="Chess Capital Backend",
-    on_startup=check_pgn_folder(),
+    lifespan=lifespan, # type: ignore[arg-type]
     exception_handlers={GameNotFoundError: exc_handler}
 )
 

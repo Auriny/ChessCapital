@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель: ПМЭФ 2026</title>
+    
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#2563eb' }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="./style/styles.css">
+    <style>
+        .camera-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        }
+        .camera-grid div {
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col font-sans">
+    
+    <nav class="relative z-10 bg-white dark:bg-gray-800 shadow-md py-4 transition-colors duration-300">
+        <div class="max-w-4xl mx-auto w-full px-4 lg:px-8 flex justify-between items-center">
+            <div>
+                <h1 class="font-bold text-xl tracking-wide text-gray-900 dark:text-white">ПМЭФ-2026</h1>
+                <p class="text-xs text-red-600 font-mono tracking-wider">Управление турниром</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="logout-btn" onclick="logout()" class="hidden p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Выйти из аккаунта">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <svg id="theme-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="flex-grow flex items-center justify-center p-4 relative z-10">
+        <div id="step-login" class="w-full max-w-sm bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all">
+            <h2 class="text-2xl font-bold mb-6 text-center">Авторизация</h2>
+            <form onsubmit="handleLogin(event)" class="flex flex-col gap-4">
+                <div>
+                    <label class="block text-sm mb-1 text-gray-500 dark:text-gray-400">Логин</label>
+                    <input type="text" id="login" required class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-gray-500 dark:text-gray-400">Пароль</label>
+                    <input type="password" id="password" required class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+                <button type="submit" class="mt-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">Войти</button>
+            </form>
+        </div>
+
+        <div id="step-start" class="hidden flex-col items-center justify-center transition-all">
+            <div class="mb-8 text-center">
+                <p class="text-lg text-gray-500 dark:text-gray-400">Добро пожаловать. Система готова к работе.</p>
+            </div>
+            <button onclick="openSettings()" class="group relative px-12 py-6 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-2xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.5)] transition-all hover:scale-105 active:scale-95">
+                НАЧАТЬ ИГРУ
+                <div class="absolute inset-0 rounded-2xl border-2 border-white/20"></div>
+            </button>
+        </div>
+
+        <div id="step-active-game" class="hidden flex-col items-center justify-center w-full max-w-3xl bg-white dark:bg-gray-800 p-6 md:p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all">
+            <div class="flex items-center gap-3 mb-6 w-full justify-between">
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> Идет трансляция
+                </h2>
+                <div class="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-md">Раунд <span id="active-round">1</span></div>
+            </div>
+            
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 w-full">Камера активна. Сервис CV анализирует доску в реальном времени. Следите за тем, чтобы рамка совпадала с клетками доски, иначе могут быть серьезные проблемы.</p>
+
+            <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden mb-6 border border-gray-300 dark:border-gray-600">
+                <video id="active-camera-feed" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="camera-grid w-[50%] aspect-square z-10 opacity-40"></div>
+                </div>
+            </div>
+
+            <button onclick="endGame()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-lg rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
+                Завершить трансляцию и подвести итоги
+            </button>
+        </div>
+
+    </main>
+
+    <div id="modal-overlay" class="hidden fixed inset-0 z-40 bg-white/40 dark:bg-gray-900/60 backdrop-blur-md flex-col justify-center items-center p-4 overflow-y-auto pt-24 pb-10">
+        <div id="step-settings" class="hidden w-full max-w-lg bg-white dark:bg-gray-800 p-6 md:p-8 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-6">Настройки партии</h2>
+            
+            <form id="settings-form" onsubmit="handleSettings(event)" class="flex flex-col gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Ссылка на трансляцию VK Video</label>
+                    <input type="url" id="stream_url" required pattern=".*(vk\.com|vkvideo\.ru).*" title="Ссылка должна содержать vk.com или vkvideo.ru" placeholder="https://vkvideo.ru/video-123456789_987654321" class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                    <p class="text-xs text-red-500 mt-1 hidden" id="vk-error">Пожалуйста, введите корректную ссылку VK Video.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Раунд</label>
+                        <input type="number" id="round" min="1" max="99" value="1" required class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Время (мин)</label>
+                        <input type="number" id="time_control_mins" min="1" max="180" value="15" required class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Доп (сек)</label>
+                        <input type="number" id="time_increment_secs" min="0" max="60" value="10" required class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+                        <label class="block text-sm font-bold mb-2 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-white border border-gray-300"></span> Белые
+                        </label>
+                        <input type="text" id="white_player" placeholder="ФИО игрока" required class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+                        <label class="block text-sm font-bold mb-2 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-black"></span> Черные
+                        </label>
+                        <input type="text" id="black_player" placeholder="ФИО игрока" required class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" class="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors flex justify-center items-center gap-2">
+                    Продолжить к камере
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </form>
+        </div>
+
+        <div id="step-camera" class="hidden w-full max-w-2xl bg-white dark:bg-gray-800 p-4 md:p-6 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-bold mb-2 text-center">Настройка камеры</h2>
+            <p class="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">Нужно навести камеру по синему трафарету. <br><strong>Важно!</strong> Трафарет ставим не по размеру доски, а по началу клеток. Небольшая погрешность допустима, но чем точнее установлена камера, тем лучше.</p>
+            
+            <div class="relative w-full aspect-square bg-black rounded-xl overflow-hidden mb-4 border border-gray-300 dark:border-gray-600">
+                <video id="camera-feed" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="camera-grid w-[80%] aspect-square z-10"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="cancelCamera()" class="w-1/3 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold rounded-lg transition-colors">Назад</button>
+                <button onclick="captureAndConfirm()" class="w-2/3 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition-colors flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Зафиксировать
+                </button>
+            </div>
+            <canvas id="snapshot-canvas" class="hidden"></canvas>
+        </div>
+
+        <div id="step-confirm" class="hidden w-full max-w-lg bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-center">Проверка данных</h2>
+            
+            <div class="space-y-4 text-sm">
+                <div class="w-full aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
+                    <img id="preview-image" src="" alt="Снимок доски" class="w-full h-full object-cover">
+                    <div class="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">Кадровка зафиксирована</div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <ul class="space-y-2">
+                        <li class="flex justify-between border-b border-gray-200 dark:border-gray-600 pb-1">
+                            <span class="text-gray-500">Белые:</span> <strong id="conf-white"></strong>
+                        </li>
+                        <li class="flex justify-between border-b border-gray-200 dark:border-gray-600 pb-1">
+                            <span class="text-gray-500">Черные:</span> <strong id="conf-black"></strong>
+                        </li>
+                        <li class="flex justify-between border-b border-gray-200 dark:border-gray-600 pb-1">
+                            <span class="text-gray-500">Раунд:</span> <strong id="conf-round"></strong>
+                        </li>
+                        <li class="flex justify-between border-b border-gray-200 dark:border-gray-600 pb-1">
+                            <span class="text-gray-500">Время:</span> <strong id="conf-time"></strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+                <button onclick="backToSettings()" class="w-1/3 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold rounded-lg transition-colors">Изменить</button>
+                <button id="btn-submit" onclick="submitGame()" class="w-2/3 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors flex justify-center items-center gap-2">
+                    Запустить трансляцию!
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const htmlEl = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        themeBtn.addEventListener('click', () => {
+            htmlEl.classList.toggle('dark');
+            localStorage.theme = htmlEl.classList.contains('dark') ? 'dark' : 'light';
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.camera-grid').forEach(grid => {
+                for(let i=0; i<64; i++) grid.appendChild(document.createElement('div'));
+            });
+            checkAuthState();
+        });
+
+        let gameData = {};
+        let mediaStream = null;
+        let screenshotInterval = null;
+
+        function checkAuthState() {
+            const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
+            const isGameRunning = localStorage.getItem('gameRunning') === 'true';
+
+            if (isLoggedIn) {
+                document.getElementById('logout-btn').classList.remove('hidden');
+                if (isGameRunning) {
+                    const savedData = localStorage.getItem('gameData');
+                    if (savedData) {
+                        gameData = JSON.parse(savedData);
+                        document.getElementById('active-round').innerText = gameData.round || '1';
+                    }
+                    showStep('active-game');
+                    
+                    startCamera('active-camera-feed').then(() => {
+                        startSendingScreenshots();
+                    }); 
+                } else {
+                    showStep('start');
+                }
+            } else {
+                showStep('login');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Проверка...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                localStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('logout-btn').classList.remove('hidden');
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showStep('start');
+            }, 600);
+        }
+
+        function logout() {
+            if (localStorage.getItem('gameRunning') === 'true') {
+                if(!confirm("У вас идет активная трансляция! Точно хотите выйти? Игра будет завершена!")) return;
+            }
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('gameRunning');
+            localStorage.removeItem('gameData');
+            document.getElementById('logout-btn').classList.add('hidden');
+            stopCamera();
+            stopSendingScreenshots();
+            showStep('login');
+        }
+
+        function showStep(stepId) {
+            document.getElementById('step-login').classList.add('hidden');
+            
+            document.getElementById('step-start').classList.add('hidden');
+            document.getElementById('step-start').classList.remove('flex');
+            
+            document.getElementById('step-active-game').classList.add('hidden');
+            document.getElementById('step-active-game').classList.remove('flex');
+            
+            document.getElementById('step-settings').classList.add('hidden');
+            document.getElementById('step-camera').classList.add('hidden');
+            document.getElementById('step-confirm').classList.add('hidden');
+            const modalOverlay = document.getElementById('modal-overlay');
+
+            if (stepId === 'login') {
+                document.getElementById('step-login').classList.remove('hidden');
+                modalOverlay.classList.add('hidden');
+                modalOverlay.classList.remove('flex');
+            } 
+            else if (stepId === 'start') {
+                document.getElementById('step-start').classList.remove('hidden');
+                document.getElementById('step-start').classList.add('flex');
+                modalOverlay.classList.add('hidden');
+                modalOverlay.classList.remove('flex');
+            }
+            else if (stepId === 'active-game') {
+                document.getElementById('step-active-game').classList.remove('hidden');
+                document.getElementById('step-active-game').classList.add('flex');
+                modalOverlay.classList.add('hidden');
+                modalOverlay.classList.remove('flex');
+            }
+            else {
+                modalOverlay.classList.remove('hidden');
+                modalOverlay.classList.add('flex');
+                document.getElementById('step-' + stepId).classList.remove('hidden');
+            }
+        }
+
+        function openSettings() {
+            showStep('settings');
+        }
+
+        function closeModal() {
+            showStep('start');
+            stopCamera();
+        }
+
+        function handleSettings(e) {
+            e.preventDefault();
+            
+            const urlInput = document.getElementById('stream_url');
+            if (!urlInput.value.includes('vk.com') && !urlInput.value.includes('vkvideo.ru')) {
+                document.getElementById('vk-error').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('vk-error').classList.add('hidden');
+
+            const mins = document.getElementById('time_control_mins').value;
+            const inc = document.getElementById('time_increment_secs').value;
+            const timeControl = `${mins}+${inc}`;
+
+            gameData = {
+                stream_url: urlInput.value,
+                round: parseInt(document.getElementById('round').value),
+                time_control: timeControl,
+                white: document.getElementById('white_player').value,
+                black: document.getElementById('black_player').value,
+                date: new Date().toISOString()
+            };
+            
+            showStep('camera');
+            startCamera('camera-feed');
+        }
+
+        async function startCamera(videoId) {
+            const video = document.getElementById(videoId);
+            try {
+                if (!mediaStream) {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment' } 
+                    });
+                }
+                video.srcObject = mediaStream;
+            } catch (err) {
+                console.error("Ошибка доступа к камере: ", err);
+                alert("Не удалось получить доступ к камере. Убедитесь, что выданы разрешения.");
+            }
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            const videos = document.querySelectorAll('video');
+            videos.forEach(v => v.srcObject = null);
+        }
+
+        function cancelCamera() {
+            stopCamera();
+            showStep('settings');
+        }
+
+        function captureAndConfirm() {
+            const video = document.getElementById('camera-feed');
+            const canvas = document.getElementById('snapshot-canvas');
+            
+            if (video.videoWidth > 0) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                document.getElementById('preview-image').src = canvas.toDataURL('image/jpeg');
+            }
+
+            document.getElementById('conf-white').innerText = gameData.white;
+            document.getElementById('conf-black').innerText = gameData.black;
+            document.getElementById('conf-round').innerText = gameData.round;
+            document.getElementById('conf-time').innerText = gameData.time_control;
+
+            showStep('confirm');
+        }
+
+        function backToSettings() {
+            showStep('settings');
+        }
+
+        function startSendingScreenshots() {
+            const video = document.getElementById('active-camera-feed');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            screenshotInterval = setInterval(async () => {
+                if (video.videoWidth > 0) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const base64Image = canvas.toDataURL('image/png');
+
+                    try {
+                        await fetch('/api/v1/cv/image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ image: base64Image })
+                        });
+                    } catch (err) {
+                        console.error("Ошибка отправки кадра на CV:", err);
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopSendingScreenshots() {
+            if (screenshotInterval) {
+                clearInterval(screenshotInterval);
+                screenshotInterval = null;
+            }
+        }
+
+        async function submitGame() {
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Запуск...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/v1/game/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(gameData)
+                });
+
+                if (!response.ok) throw new Error('Ошибка сервера');
+
+                localStorage.setItem('gameRunning', 'true');
+                localStorage.setItem('gameData', JSON.stringify(gameData));
+                
+                document.getElementById('active-round').innerText = gameData.round;
+                
+                showStep('active-game');
+                document.getElementById('active-camera-feed').srcObject = mediaStream;
+
+                startSendingScreenshots();
+
+                btn.innerHTML = 'Запустить трансляцию!';
+                btn.disabled = false;
+
+            } catch (error) {
+                console.error(error);
+                alert("Произошла ошибка при запуске игры! Проверьте бэкенд.");
+                btn.innerHTML = 'Запустить трансляцию!';
+                btn.disabled = false;
+            }
+        }
+
+        async function endGame() {
+            if (confirm("Вы уверены, что хотите завершить трансляцию и подвести итоги? Это действие остановит матч для зрителей.")) {
+                try {
+                    await fetch('/api/v1/game/end', { method: 'POST' });
+                } catch (error) {
+                    console.error("Ошибка при завершении:", error);
+                }
+
+                localStorage.setItem('gameRunning', 'false');
+                localStorage.removeItem('gameData');
+                
+                stopCamera();
+                stopSendingScreenshots();
+                
+                alert("Трансляция успешно завершена! Данные сохранены.");
+                showStep('start');
+            }
+        }
+    </script>
+</body>
+</html>

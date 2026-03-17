@@ -12,7 +12,8 @@ class StartGame(BaseModel):
     date: datetime.date = Field(description="Game's datetime")
     time_control: str = Field(
         description="Time control in seconds",
-        pattern=r"^[1-9][0-9]*(?:\+[1-9][0-9]*)?$"
+        pattern=r"^[1-9][0-9]*(?:\+[1-9][0-9]*)?$",
+        examples=["900", "900+60"]
     )
     stream_url: HttpUrl = Field(description="Stream from VK")
 

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
 
 from utils import ChessFacade
@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.post(path="/send")
 async def send_move(
-    board: Annotated[list[list[int]], Query(
+    board: Annotated[list[list[int]], Body(
         description="Chess board in matrix"
     )]
 ) -> JSONResponse:

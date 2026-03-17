@@ -21,7 +21,7 @@ class ChessFacade:
         for file in files:
             content = await file.read_text()
             game = await to_thread.run_sync(read_game, io.StringIO(content))
-            if (game and not game.end().is_end()):
+            if game and game.headers["Result"] == "*":
                 return file
         msg = "No active games found."
         raise GameNotFoundError(active=False, msg=msg)

@@ -46,8 +46,7 @@
     <nav class="relative z-50 bg-white dark:bg-gray-800 shadow-md py-4 transition-colors duration-300">
         <div class="max-w-7xl mx-auto w-full px-4 lg:px-8 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                
-                <button onclick="copyTag()" class="text-left group p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200 select-none cursor-pointer" title="Нажмите, чтобы скопировать тег">
+                <button onclick="copyTag()" class="text-left group p-2 -ml-2 rounded-xl transition-colors duration-200 select-none cursor-pointer" title="Нажмите, чтобы скопировать тег">
                     <h1 class="font-bold text-xl tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">ПМЭФ-2026</h1>
                     <p id="hashtag-text" class="text-sm gradient-tag tracking-wider transition-all duration-300">#ОмскШахматнаяСтолица</p>
                 </button>
@@ -63,10 +62,9 @@
             <svg class="w-20 h-20 mb-6 text-blue-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Игра ещё не начата!</h2>
             <p class="text-lg text-gray-500 dark:text-gray-400 mb-8 max-w-lg">
-                Ожидайте начала игры от организаторов.
+                Ожидайте начала трансляции. Партия скоро начнется.
             </p>
-            <div id="overlay-buttons" class="flex flex-wrap justify-center gap-4 w-full">
-            </div>
+            <!-- <div id="overlay-buttons" class="flex flex-wrap justify-center gap-4 w-full"></div> -->
         </div>
     </div>
 
@@ -79,9 +77,8 @@
             </div>
             <div class="relative w-full aspect-video bg-black">
                 <iframe
-                    class="absolute inset-0 w-full h-full"
-                    src="https://vkvideo.ru/video_ext.php?oid=-195891341&id=456239337&hash=83eec9db330fb3fd&hd=4&autoplay=1"
-                    frameborder="0"
+                    id="vk-player"
+                    class="absolute inset-0 w-full h-full border-0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;"
                     allowfullscreen>
                 </iframe>
@@ -138,7 +135,6 @@
         $(window).resize(board.resize);
 
         let currentPGNString = ""; 
-        let isGameAvailable = false;
 
         function parsePGNAndRender(pgnStr) {
             if (!pgnStr || pgnStr.trim() === "") return;
@@ -203,92 +199,60 @@
             }
         }
 
-        async function fetchGameData() {
+        async function fetchGameInfo() {
             try {
-                const data = { available: true, game: null }; 
+                const response = await fetch('/api/v1/game/data');
+                const data = await response.json(); 
 
-                isGameAvailable = data.available;
                 const overlay = document.getElementById('game-overlay');
+                const vkPlayer = document.getElementById('vk-player');
 
-                if (isGameAvailable) {
+                if (data.active) {
                     overlay.classList.remove('opacity-100', 'pointer-events-auto');
                     overlay.classList.add('opacity-0', 'pointer-events-none');
+
+                    if (data.stream_url) {
+                        const embedUrl = vkLinkToEmbed(data.stream_url);
+
+                        if (embedUrl && vkPlayer.src !== embedUrl) {
+                            vkPlayer.src = embedUrl;
+                        }
+                    }
+
+                    if (data.game) {
+                        if (data.game.fen) {
+                            board.position(data.game.fen);
+                        }
+                        if (data.game.pgn) {
+                            parsePGNAndRender(data.game.pgn);
+                            setTimeout(() => {
+                                highlightCheck(data.game.fen, data.game.pgn);
+                            }, 300);
+                        }
+                    }
                 } else {
                     overlay.classList.remove('opacity-0', 'pointer-events-none');
                     overlay.classList.add('opacity-100', 'pointer-events-auto');
                 }
             } catch (error) {
-                console.error("Ошибка получения данных игры:", error);
+                console.error("Ошибка соединения с сервером:", error);
             }
         }
 
-        async function fetchGameStatus() {
-            if (!isGameAvailable) return;
+        function vkLinkToEmbed(url) {
+            if (url.includes("video_ext.php")) return url;
 
-            try {
-                // mock tests
-                const data = {
-                    fen: "r3kb1r/ppp2pp1/2np4/1N6/Q1P1pP2/8/PP1P3q/R1B2BK1 w kq - 2 18",
-                    pgn: `
-                1. e4 e5 
-                2. Nf3 Nc6 
-                3. Bb5 a6 
-                4. Ba4 Nf6 
-                5. O-O Be7 
-                6. Re1 b5 
-                7. Bb3 d6 
-                8. c3 O-O 
-                9. h3 Nb8 
-                10. d4 Nbd7 
-                11. c4 c6 
-                12. cxb5 axb5 
-                13. Nc3 Bb7 
-                14. Bg5 b4 
-                15. Nb1 h6 
-                16. Bh4 c5 
-                17. dxe5 Nxe4 
-                18. Bxe7 Qxe7 
-                19. exd6 Qf6 
-                20. Nbd2 Nxd6 
-                21. Nc4 Nxc4 
-                22. Bxc4 Nb6 
-                23. Ne5 Rae8 
-                24. Bxf7+ Rxf7 
-                25. Nxf7 Rxe1+ 
-                26. Qxe1 Kxf7 
-                27. Qe3 Qc6 
-                28. Qf4+ Kg8 
-                29. Qg4 Nd5 
-                30. Re1 Nf6 
-                31. Qg6 c4 
-                32. Re7 Ne8 
-                33. Qxc6 Bxc6 
-                34. Re6 Bd7 
-                35. Re4 Qh2#
-                `
-                };
+            const match = url.match(/video(-?\d+)_(\d+)/);
+            if (!match) return null;
 
-                if (data.fen) {
-                    board.position(data.fen);
-                }
-                
-                if (data.pgn) {
-                    parsePGNAndRender(data.pgn);
-                }
+            const oid = match[1];
+            const id = match[2];
 
-                if (data.fen && data.pgn) {
-                    highlightCheck(data.fen, data.pgn);
-                }
-            } catch (error) {
-                console.error("Ошибка получения статуса игры:", error);
-            }
+            return `https://vk.com/video_ext.php?oid=${oid}&id=${id}&autoplay=1`;
         }
 
-        setInterval(fetchGameData, 2000);
-        setInterval(fetchGameStatus, 2000);
-        
-        fetchGameData();
-        fetchGameStatus();
+        setInterval(fetchGameInfo, 2000);
+        fetchGameInfo();
 
         async function copyTag() {
             const tagElement = document.getElementById('hashtag-text');
@@ -340,7 +304,7 @@
                 try {
                     await navigator.share({
                         title: 'ПМЭФ-2026 шахматная партия',
-                        text: 'Следите за партией губернатора в прямом эфире',
+                        text: 'Следите за партией Губернатора в прямом эфире! #ОмскШахматнаяСтолица',
                         url: url
                     });
                 } catch {}

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 from models.game import Game
 
@@ -8,4 +8,4 @@ class GameResponse(BaseModel):
 
     active: bool
     game: Game
-    stream_url: str
+    stream_url: HttpUrl

@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from enums.statuses import ResponseStatuses
 from utils.chess_facade import ChessFacade
 
 router = APIRouter()
@@ -19,5 +18,5 @@ async def send_move(
     await ChessFacade.push(move)
     return JSONResponse(
         status_code=200,
-        content={"status": ResponseStatuses.OK,"move": move}
+        content={"status": "ok","move": move}
     )

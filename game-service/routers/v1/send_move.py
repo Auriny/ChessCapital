@@ -14,15 +14,13 @@ async def send_move(
     )]
 ) -> JSONResponse:
     moves = await ChessFacade.get_moves(board)
-    if moves is None:
-        return JSONResponse(
-            status_code=400,
-            content={"status": "error", "message": "Probably invalid matrix"}
-        )
     for move in moves:
         await ChessFacade.push(str(move))
-        await lichess.send_pgn(str(ChessFacade.load_game()))
+        await lichess.send_pgn(str(await ChessFacade.load_game()))
     return JSONResponse(
         status_code=200,
-        content={"status": "ok","move": "ХУЙ"}
+        content={
+            "status": "ok",
+            "moves": [str(move) for move in moves]
+        }
     )

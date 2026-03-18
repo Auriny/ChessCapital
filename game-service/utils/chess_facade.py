@@ -7,7 +7,11 @@ from chess import WHITE, Board, IllegalMoveError, Move, square
 from chess.pgn import Game, read_game
 
 from config import settings
-from exceptions import GameNotFoundError
+from exceptions import (
+    GameNotFoundError,
+    InvalidBoardMatrixError,
+    TooManyMovesError,
+)
 from models.requests import StartGame
 from utils.lichess_stream import lichess
 
@@ -38,18 +42,19 @@ class ChessFacade:
     @staticmethod
     async def create_game(data: StartGame) -> None:
         game = Game()
+        dt = datetime.now(tz=UTC)
         game.headers.update({
             "Event": f"{data.white} vs. {data.black}",
             "White": data.white,
             "Black": data.black,
-            "Date": str(data.date),
+            "Date": str(dt.date()),
             "TimeControl": str(data.time_control),
             "Round": str(data.round),
             "Site": str(data.stream_url),
         })
-        date_and_time = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
+        formated_dt = dt.strftime("%Y%m%d_%H%M%S")
         file = Path(
-            f"{settings.PGN_FILES_FOLDER}/{date_and_time}.pgn"
+            f"{settings.PGN_FILES_FOLDER}/{formated_dt}.pgn"
         )
         await file.write_text(str(game))
 
@@ -129,7 +134,7 @@ class ChessFacade:
     @staticmethod
     def find_moves(
         board: Board, target: frozenset, depth: int = 2
-    ) -> list[Move] | None:
+    ) -> list[Move]:
         for move in board.legal_moves:
             board.push(move)
             if ChessFacade.matrix_to_frozenset(
@@ -148,16 +153,18 @@ class ChessFacade:
                         return [move, move2]
                     board.pop()
             board.pop()
-        return None
+        msg = "Too many movess for processing"
+        raise TooManyMovesError(msg)
 
     @staticmethod
-    async def get_moves(matrix: list[list[int]]) -> list[Move] | None:
+    async def get_moves(matrix: list[list[int]]) -> list[Move]:
         if not ChessFacade.validate_matrix(matrix):
-            return None
-        board = (await ChessFacade.load_game()).board()
+            msg = "Invalid matrix"
+            raise InvalidBoardMatrixError(msg)
+        board = (await ChessFacade.load_game()).end().board()
         target = ChessFacade.matrix_to_frozenset(matrix)
         if ChessFacade.matrix_to_frozenset(
             ChessFacade.board_to_matrix(board)
         ) == target:
-            return None
+            return []
         return await asyncio.to_thread(ChessFacade.find_moves, board, target)

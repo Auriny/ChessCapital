@@ -3,9 +3,10 @@ from fastapi import FastAPI
 
 from exceptions import (
     GameNotFoundError,
+    base_handler,
     game_not_found_handler,
-    illegal_move_handler,
 )
+from exceptions.base import CapitalChessBaseError
 from routers import api_router
 from utils.startup import lifespan
 
@@ -14,7 +15,8 @@ app = FastAPI(
     lifespan=lifespan, # type: ignore[arg-type]
     exception_handlers={
         GameNotFoundError: game_not_found_handler,
-        IllegalMoveError: illegal_move_handler,
+        CapitalChessBaseError: base_handler,
+        IllegalMoveError: base_handler,
     }
 )
 

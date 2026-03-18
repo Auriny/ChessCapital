@@ -1,8 +1,9 @@
+import asyncio
 import io
 from datetime import UTC, datetime
 
 from anyio import Path, to_thread
-from chess import IllegalMoveError, Move
+from chess import WHITE, Board, IllegalMoveError, Move, square
 from chess.pgn import Game, read_game
 
 from config import settings
@@ -90,5 +91,73 @@ class ChessFacade:
         await ChessFacade.save_game(game)
 
     @staticmethod
-    async def get_move(board: list[list[int]]) -> Move:
-        pass
+    def board_to_matrix(board: Board) -> list[list[int]]:
+        result = []
+        for rank in range(7, -1, -1):
+            row = []
+            for file in range(8):
+                piece = board.piece_at(square(file, rank))
+                row.append(
+                    0 if piece is None else (1 if piece.color == WHITE else 2)
+                )
+            result.append(row)
+        return result
+
+    @staticmethod
+    def matrix_to_frozenset(
+        matrix: list[list[int]],
+    ) -> frozenset[tuple[int, int]]:
+        occupied = set()
+        for r, row in enumerate(matrix):
+            for f, val in enumerate(row):
+                if val != 0:
+                    occupied.add((square(f, 7 - r), val))
+        return frozenset(occupied)
+
+    @staticmethod
+    def validate_matrix(matrix: list[list[int]]) -> bool:
+        if len(matrix) != 8 or any(len(row) != 8 for row in matrix):  # noqa: PLR2004
+            return False
+        white = sum(v == 1 for row in matrix for v in row)
+        black = sum(v == 2 for row in matrix for v in row)  # noqa: PLR2004
+        return (
+            all(v in (0, 1, 2) for row in matrix for v in row)
+            and 1 <= white <= 16  # noqa: PLR2004
+            and 1 <= black <= 16  # noqa: PLR2004
+        )
+
+    @staticmethod
+    def find_moves(
+        board: Board, target: frozenset, depth: int = 2
+    ) -> list[Move] | None:
+        for move in board.legal_moves:
+            board.push(move)
+            if ChessFacade.matrix_to_frozenset(
+                ChessFacade.board_to_matrix(board)
+            ) == target:
+                board.pop()
+                return [move]
+            if depth > 1:
+                for move2 in board.legal_moves:
+                    board.push(move2)
+                    if ChessFacade.matrix_to_frozenset(
+                        ChessFacade.board_to_matrix(board)
+                    ) == target:
+                        board.pop()
+                        board.pop()
+                        return [move, move2]
+                    board.pop()
+            board.pop()
+        return None
+
+    @staticmethod
+    async def get_moves(matrix: list[list[int]]) -> list[Move] | None:
+        if not ChessFacade.validate_matrix(matrix):
+            return None
+        board = (await ChessFacade.load_game()).board()
+        target = ChessFacade.matrix_to_frozenset(matrix)
+        if ChessFacade.matrix_to_frozenset(
+            ChessFacade.board_to_matrix(board)
+        ) == target:
+            return None
+        return await asyncio.to_thread(ChessFacade.find_moves, board, target)

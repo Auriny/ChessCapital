@@ -65,18 +65,18 @@ class ChessFacade:
     @staticmethod
     async def save_game(game: Game) -> None:
         pgn = await ChessFacade._get_last_pgn_path()
-        game_str = await to_thread.run_sync(str, game)
+        game_str = str(game)
         await pgn.write_text(game_str)
 
     @staticmethod
     async def push(move: str) -> None:
         game = await ChessFacade.load_game()
         node = game.end()
-        if Move.from_uci(move) not in node.board().legal_moves:
+        move_instance = Move.from_uci(move)
+        if move_instance not in node.board().legal_moves:
             msg = f"Illegal move {move!s}"
             raise IllegalMoveError(msg)
-        move_instance = Move.from_uci(move)
-        await to_thread.run_sync(node.add_variation, move_instance)
+        node.add_variation(move_instance)
         if (game.end().board().is_game_over()):
             game.headers["Result"] = game.end().board().result()
         await ChessFacade.save_game(game)

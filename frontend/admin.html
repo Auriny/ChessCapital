@@ -93,11 +93,11 @@
             
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 w-full">Следите за тем, чтобы рамка совпадала с клетками доски, иначе могут быть серьезные проблемы.</p>
 
-            <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden mb-6 border border-gray-300 dark:border-gray-600">
+            <div class="relative w-full aspect-square bg-black rounded-xl overflow-hidden mb-6 border border-gray-300 dark:border-gray-600">
                 <video id="active-camera-feed" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
                 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="camera-grid w-[50%] aspect-square z-10 opacity-40"></div>
+                    <div class="camera-grid w-[80%] aspect-square z-10 opacity-40"></div>
                 </div>
             </div>
 
@@ -119,8 +119,8 @@
             <form id="settings-form" onsubmit="handleSettings(event)" class="flex flex-col gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Ссылка на трансляцию VK Video</label>
-                    <input type="url" id="stream_url" required pattern=".*(vk\.com|vkvideo\.ru).*" title="Ссылка должна содержать vk.com или vkvideo.ru" placeholder="https://vkvideo.ru/video_ext.php?..." class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
-                    <p class="text-xs text-red-500 mt-1 hidden" id="vk-error">Пожалуйста, введите корректную ссылку VK Video.</p>
+                    <input type="url" id="stream_url" required pattern=".*(live\.vk\.com|live\.vkvideo\.ru).*" title="Поддерживаются ссылки только на vk live" placeholder="https://live.vkvideo.ru/stream_url" class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                    <p class="text-xs text-red-500 mt-1 hidden" id="vk-error">Пожалуйста, введите корректную ссылку live.VKVideo.</p>
                 </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -155,7 +155,6 @@
 
                 <button type="submit" class="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors flex justify-center items-center gap-2">
                     Продолжить к камере
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </form>
         </div>
@@ -432,18 +431,38 @@
 
             screenshotInterval = setInterval(async () => {
                 if (video.videoWidth > 0 && gameData.metadata) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    const MAX_WIDTH = 800;
+                    let scaleFactor = 1;
+                    
+                    if (video.videoWidth > MAX_WIDTH) {
+                        scaleFactor = MAX_WIDTH / video.videoWidth;
+                    }
+
+                    canvas.width = video.videoWidth * scaleFactor;
+                    canvas.height = video.videoHeight * scaleFactor;
+                    
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     
-                    const base64Image = canvas.toDataURL('image/png');
+                    const base64Image = canvas.toDataURL('image/jpeg', 0.6);
+
+                    const scaledMetadata = {
+                        TOP_LEFT: [
+                            Math.round(gameData.metadata.TOP_LEFT[0] * scaleFactor),
+                            Math.round(gameData.metadata.TOP_LEFT[1] * scaleFactor)
+                        ],
+                        BOTTOM_RIGHT: [
+                            Math.round(gameData.metadata.BOTTOM_RIGHT[0] * scaleFactor),
+                            Math.round(gameData.metadata.BOTTOM_RIGHT[1] * scaleFactor)
+                        ],
+                        CELL_SIZE: Math.round(gameData.metadata.CELL_SIZE * scaleFactor)
+                    };
 
                     try {
-                        await fetch('/api/v1/cv/image', {
+                        await fetch('/api/v1/cv/frame', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                metadata: gameData.metadata,
+                                metadata: scaledMetadata,
                                 frame: base64Image
                             })
                         });
@@ -467,7 +486,7 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('/api/v1/game/api/v1/game/start', {
+                const response = await fetch('/api/v1/game/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(gameData)
@@ -543,7 +562,7 @@
         async function endGame() {
             if (confirm("Вы уверены, что хотите завершить трансляцию и подвести итоги? Это действие остановит матч для зрителей.")) {
                 try {
-                    await fetch('/api/v1/game/api/v1/game/end', { method: 'POST' });
+                    await fetch('/api/v1/game/end', { method: 'POST' });
                 } catch (error) {
                     console.error("Ошибка при завершении:", error);
                 }
@@ -566,12 +585,10 @@
                 colno,
                 error
             });
-            // alert('JS ошибка: ' + message);
         };
 
         window.onunhandledrejection = function (event) {
             console.error('Unhandled promise:', event.reason);
-            // alert('Promise ошибка: ' + event.reason);
         };            
 </script>
 </body>

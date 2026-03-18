@@ -33,9 +33,9 @@ async def frame(request: Request):
     if "metadata" not in json_body or "frame" not in json_body:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": "Metadata or frame is empty"})
 
-    process_board(json_body)
+    board = process_board(json_body)
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content={})
+    return JSONResponse(status_code=status.HTTP_200_OK, content=board)
 
 
 def process_board(json_body: dict[str, Any]):
@@ -46,7 +46,8 @@ def process_board(json_body: dict[str, Any]):
     pprint(board)
     print(json.dumps(board))
     resp = requests.post(
-        f"http://0.0.0.0:{cfg.GAME_PORT}/api/v1/game/send",
+        f"https://{cfg.HOST_NAME}/api/v1/game/api/v1/game/send",
         data=json.dumps(board),
     )
     print(resp.json())
+    return board

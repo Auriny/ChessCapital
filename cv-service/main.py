@@ -2,7 +2,7 @@ import os, dotenv
 
 from fastapi import FastAPI
 
-from routers import router as api_router
+from routers.frame import router as frame_router
 import config as cfg
 
 
@@ -12,7 +12,8 @@ config = {
 }
 
 cfg.GAME_PORT = config["GAME_PORT"]
+cfg.HOST_NAME = config["HOST_NAME"]
 
 app = FastAPI()
 
-app.include_router(api_router)
+app.include_router(frame_router)

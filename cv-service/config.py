@@ -1,1 +1,2 @@
-GAME_PORT = 8080
+GAME_PORT: int
+HOST_NAME: str

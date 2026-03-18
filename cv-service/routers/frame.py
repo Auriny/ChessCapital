@@ -35,7 +35,7 @@ async def frame(request: Request):
 
     board = process_board(json_body)
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content={})
+    return JSONResponse(status_code=status.HTTP_200_OK, content=board)
 
 
 def process_board(json_body: dict[str, Any]):
@@ -50,8 +50,7 @@ def process_board(json_body: dict[str, Any]):
     pprint(board)
     resp = requests.post(
         f"http://{cfg.HOST_NAME}/send",
-        headers={"Content-Type": "application/json"},
-        data=json.dumps(board)
+        json=board
     )
     print(resp.json())
     return board

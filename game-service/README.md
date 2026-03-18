@@ -11,14 +11,20 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### Установка зависимостей
 
 ```bash
-uv venv -seed
+uv venv --seed
 uv sync
 ```
 
 ### Запуск
 
 ```bash
-uv run uvicorn main:app --host 127.0.0.1 --port 8080 # Порт замени на свободный какой-нибудь
+uv run uvicorn main:app --reload --host 0.0.0.0 --port 8080 # Порт замени на свободный какой-нибудь
+```
+
+Или альтернатива
+
+```bash
+fastapi run --reload --host 0.0.0.0 --port 8080 # Порт, опять же, меняешь, если надо
 ```
 
 ## С В А Г А

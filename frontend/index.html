@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru" class="light">
 <head>
+    <link rel="icon" href="./assets/favicon_wh.png" type="image/x-icon">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -45,12 +47,19 @@
     
     <nav class="relative z-50 bg-white dark:bg-gray-800 shadow-md py-4 transition-colors duration-300">
         <div class="max-w-7xl mx-auto w-full px-4 lg:px-8 flex justify-between items-center">
-            <div class="flex items-center gap-4">
+            
+            <!-- ОБНОВЛЕННЫЙ БЛОК С ЛОГОТИПОМ -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="w-10 h-10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <img src="./assets/logo.svg" alt="Логотип ПМЭФ" class="w-full h-full object-contain scale-[1.3] dark:invert transition-all duration-300">
+                </div>
                 <button onclick="copyTag()" class="text-left group p-2 -ml-2 rounded-xl transition-colors duration-200 select-none cursor-pointer" title="Нажмите, чтобы скопировать тег">
-                    <h1 class="font-bold text-xl tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">ПМЭФ-2026</h1>
+                    <h1 class="font-bold text-xl tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">ПМЭФ-2026</h1>
                     <p id="hashtag-text" class="text-sm gradient-tag tracking-wider transition-all duration-300">#ОмскШахматнаяСтолица</p>
                 </button>
             </div>
+            <!-- КОНЕЦ БЛОКА С ЛОГОТИПОМ -->
+
             <button id="theme-toggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                 <svg id="theme-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
             </button>

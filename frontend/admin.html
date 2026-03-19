@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru" class="light">
 <head>
+    <link rel="icon" href="./assets/favicon_wh.png" type="image/x-icon">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ПМЭФ 2026: админка</title>
@@ -42,10 +44,20 @@
     
     <nav class="relative z-10 bg-white dark:bg-gray-800 shadow-md py-4 transition-colors duration-300">
         <div class="max-w-4xl mx-auto w-full px-4 lg:px-8 flex justify-between items-center">
-            <div>
-                <h1 class="font-bold text-xl tracking-wide text-gray-900 dark:text-white">ПМЭФ-2026</h1>
-                <p class="text-xs text-red-600 font-mono tracking-wider">Управление турниром</p>
+            
+            <!-- ОБНОВЛЕННЫЙ БЛОК С ЛОГОТИПОМ -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <!-- Класс scale-[1.3] визуально обрезает пустые края логотипа, а dark:invert делает его белым в темной теме -->
+                    <img src="./assets/logo.svg" alt="Логотип ПМЭФ" class="w-full h-full object-contain scale-[1.3] dark:invert transition-all duration-300">
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-wide text-gray-900 dark:text-white leading-tight">ПМЭФ-2026</h1>
+                    <p class="text-xs text-red-600 font-mono tracking-wider">Управление турниром</p>
+                </div>
             </div>
+            <!-- КОНЕЦ БЛОКА С ЛОГОТИПОМ -->
+
             <div class="flex items-center gap-2">
                 <button id="logout-btn" onclick="logout()" class="hidden p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Выйти из аккаунта">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -592,6 +604,6 @@
         window.onunhandledrejection = function (event) {
             console.error('Unhandled promise:', event.reason);
         };            
-</script>
+    </script>
 </body>
 </html>
